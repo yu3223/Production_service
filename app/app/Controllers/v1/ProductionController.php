@@ -20,6 +20,22 @@ class ProductionController extends BaseController
      */
     public function index()
     {
+        try {
+            // 模擬 CPU 負載
+            $this->simulateCpuLoad(150000);
+
+            // 模擬 I/O
+            $this->simulateIO();
+
+            // 模擬記憶體
+            $this->simulateMemoryUsage(8000);
+
+            // 模擬請求延遲
+            $this->simulateRequestDelay(300);
+        } catch (\Throwable $e) {
+            log_message('error', '[LOAD SIMULATION ERROR] ' . $e->getMessage());
+        }
+
         $limit  = $this->request->getGet("limit") ?? 10;
         $offset = $this->request->getGet("offset") ?? 0;
         $search = $this->request->getGet("search") ?? "";
@@ -52,13 +68,54 @@ class ProductionController extends BaseController
         }else{
             return $this->fail("無資料",404);
         }
-        
 
         return $this->respond([
             "msg" => "OK",
+            "service" => "2",
             "data" => $data
         ]);
     }
+
+    // ---------- 以下為模擬負載用 ----------
+
+    private function simulateCpuLoad($intensity = 100000)
+    {
+        $count = 0;
+        for ($i = 2; $i < $intensity; $i++) {
+            $isPrime = true;
+            for ($j = 2; $j <= sqrt($i); $j++) {
+                if ($i % $j == 0) {
+                    $isPrime = false;
+                    break;
+                }
+            }
+            if ($isPrime) $count++;
+        }
+    }
+
+    private function simulateIO()
+    {
+        file_put_contents('/tmp/test.txt', str_repeat('data', 10000));
+        $content = file_get_contents('/tmp/test.txt');
+        unset($content);
+    }
+
+    private function simulateMemoryUsage($entries = 5000)
+    {
+        $data = [];
+        for ($i = 0; $i < $entries; $i++) {
+            $data[] = str_repeat('x', 1024); // 每筆 1KB
+        }
+        unset($data);
+        gc_collect_cycles();
+    }
+
+    private function simulateRequestDelay($delay = 500)
+    {
+        usleep($delay * 1000); // 將其轉換為毫秒
+    }
+
+
 
     /**
      * [GET] /api/v1/products/{productionKey}
